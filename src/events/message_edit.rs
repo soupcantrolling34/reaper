@@ -17,6 +17,9 @@ impl Handler {
             Ok(message) => {
                 match message {
                     Some(message) => {
+                        if let None = event.author.as_ref() {
+                            return;
+                        }
                         let (user_id, message) = message.split_once(":").unwrap();
                         
                         match self.redis.set_message(
