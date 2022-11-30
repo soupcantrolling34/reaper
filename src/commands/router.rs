@@ -142,6 +142,9 @@ impl Handler {
             match ChannelId(logging_config.logging_channel as u64).send_message(&ctx.http, |message| {
                 message
                     .content(message_content)
+                    .allowed_mentions(|allowed_mentions| {
+                        allowed_mentions.empty_parse()
+                    })
             }).await {
                 Ok(_) => (),
                 Err(err) => error!("Failed to send message to logging channel. Failed with error: {}", err)

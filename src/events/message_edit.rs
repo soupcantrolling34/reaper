@@ -48,6 +48,9 @@ impl Handler {
                             .send_message(ctx.http.as_ref(), |msg| {
                                 msg
                                     .content(format!("Message edited in <#{}> by <@{}>:\n\n**Old:**\n`{}`\n\n**New:**\n`{}`", event.channel_id.0 as i64, user_id, message.replace("`", r"\`"), event.content.as_ref().unwrap().replace("`", r"\`")))
+                                    .allowed_mentions(|allowed_mentions| {
+                                        allowed_mentions.empty_parse()
+                                    })
                             }).await {
                                 Ok(_) => {},
                                 Err(err) => {

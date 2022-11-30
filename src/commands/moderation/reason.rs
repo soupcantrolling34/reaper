@@ -69,6 +69,9 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                         if let Err(err) = ChannelId(logging_config.logging_channel as u64).send_message(&ctx.http, |message| {
                             message
                                 .content(format!("UUID {} reason (for <@{}>) has been updated to `{}` by <@{}>", action.uuid, action.user_id, action.reason, cmd.user.id.0))
+                                .allowed_mentions(|allowed_mentions| {
+                                    allowed_mentions.empty_parse()
+                                })
                         }).await {
                             error!("Failed to send message to logging channel. Failed with error: {}", err);
                         }

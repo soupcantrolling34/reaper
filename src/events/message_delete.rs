@@ -32,6 +32,9 @@ impl Handler {
                             .send_message(ctx.http.as_ref(), |msg| {
                                 msg
                                     .content(format!("Message deleted in <#{}> by <@{}>:\n`{}`", channel_id, user_id, message.replace("`", r"\`")))
+                                    .allowed_mentions(|allowed_mentions| {
+                                        allowed_mentions.empty_parse()
+                                    })
                             }).await {
                                 Ok(_) => {},
                                 Err(err) => {
