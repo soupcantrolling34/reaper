@@ -190,13 +190,14 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                         .name("user")
                         .description("The user to search for")
                         .kind(CommandOptionType::User)
-                        .required(true)
+                        .required(false)
                 })
                 .create_sub_option(|option| {
                     option
                         .name("expired")
                         .description("Whether to include expired actions")
                         .kind(CommandOptionType::Boolean)
+                        .required(false)
                 })
         })
         .create_option(|option| {
