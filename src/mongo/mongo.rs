@@ -329,7 +329,7 @@ impl Mongo {
 
     pub async fn get_expired_actions(&self) -> Result<Vec<structs::Action>, structs::MongoError> {
         let actions: Collection<structs::Action> = self.client.database("reaper").collection("actions");
-        let mut actions = match actions.find(doc!{"expiry": {"$lt": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64}}, None).await {
+        let mut actions = match actions.find(doc!{"expiry": {"$lt": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64}, "active": true}, None).await {
             Ok(actions) => {
                 actions
             },
