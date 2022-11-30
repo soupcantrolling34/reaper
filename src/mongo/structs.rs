@@ -37,6 +37,8 @@ pub enum Permissions {
     ModerationSearchSelfExpired,
     #[serde(rename = "moderation.search.others.expired")]
     ModerationSearchOthersExpired,
+    #[serde(rename = "moderation.search.uuid")]
+    ModerationSearchUuid,
     #[serde(rename = "moderation.mute")]
     ModerationMute,
     #[serde(rename = "moderation.unmute")]
@@ -81,6 +83,7 @@ impl ToString for Permissions {
             Permissions::ModerationSearchOthers => "moderation.search.others".to_string(),
             Permissions::ModerationSearchSelfExpired => "moderation.search.self.expired".to_string(),
             Permissions::ModerationSearchOthersExpired => "moderation.search.others.expired".to_string(),
+            Permissions::ModerationSearchUuid => "moderation.search.uuid".to_string(),
             Permissions::ModerationMute => "moderation.mute".to_string(),
             Permissions::ModerationUnmute => "moderation.unmute".to_string(),
             Permissions::ModerationKick => "moderation.kick".to_string(),
@@ -107,6 +110,7 @@ impl From<String> for Permissions {
             "moderation.search.others" => Permissions::ModerationSearchOthers,
             "moderation.search.self.expired" => Permissions::ModerationSearchSelfExpired,
             "moderation.search.others.expired" => Permissions::ModerationSearchOthersExpired,
+            "moderation.search.uuid" => Permissions::ModerationSearchUuid,
             "moderation.mute" => Permissions::ModerationMute,
             "moderation.unmute" => Permissions::ModerationUnmute,
             "moderation.kick" => Permissions::ModerationKick,

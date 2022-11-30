@@ -174,6 +174,30 @@ impl Mongo {
         Ok(actions_vec)
     }
 
+    pub async fn get_action(&self, action_id: String) -> Result<Option<structs::Action>, structs::MongoError> {
+        let collection: Collection<structs::Action> = self.client.database("reaper").collection("actions");
+        let uuid = match mongodb::bson::oid::ObjectId::parse_str(&action_id) {
+            Ok(oid) => oid,
+            Err(err) => {
+                error!("Attempted to parse ObjectID {}. Failed with error: {}", &action_id, err);
+                return Err(structs::MongoError {
+                    message: "Failed to expire action".to_string(),
+                    mongo_error: None
+                });
+            }
+        };
+        match collection.find_one(doc!{"_id": uuid.clone()}, None).await {
+            Ok(action) => Ok(action),
+            Err(err) => {
+                error!("Attempted to get action {}. Failed with error: {}", uuid.to_string(), err);
+                return Err(structs::MongoError {
+                    message: "Failed to get action".to_string(),
+                    mongo_error: Some(err)
+                });
+            }
+        }
+    }
+
     pub async fn add_action_to_user(&self, user_id: i64, guild_id: i64, action_type: structs::ActionType, reason: String, moderator_id: i64, expiry: Option<Duration>) -> Result<structs::Action, structs::MongoError> {
         let actions: Collection<structs::Action> = self.client.database("reaper").collection("actions");
         let mut duration: Option<i64> = None;
