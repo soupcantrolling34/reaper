@@ -13,10 +13,6 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
             CommandOptionType::User => {
                 match Value::to_string(&option.value.clone().unwrap()).replace("\"", "").parse::<i64>() {
                     Ok(id) => {
-                        if id == cmd.user.id.0 as i64 {
-                            warn!("User {} in guild {} tried to strike themselves", cmd.user.id.0, cmd.guild_id.unwrap().0);
-                            return send_message(&ctx, &cmd, "You cannot strike yourself".to_string(), Some(true)).await;
-                        }
                         user_id = id;
                     },
                     Err(err) => {
