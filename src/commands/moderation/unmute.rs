@@ -29,6 +29,39 @@ impl Handler {
                     member = Some(mbr)
                 },
                 Err(err) => {
+                    if err.to_string() == "Unknown Member" || err.to_string() == "Unknown User" {
+                        let mut action_id = None;
+                        match self.mongo.get_actions_for_user(user_id, guild_id).await {
+                            Ok(actions) => {
+                                for action in actions {
+                                    if action.action_type == ActionType::Mute && action.active == true {
+                                        action_id = Some(action.uuid.to_string());
+                                    }
+                                }
+                            },
+                            Err(err) => {
+                                error!("Failed to get actions for user. Failed with error: {}", err);
+                                return Err(CommandError {
+                                    message: "Failed to get actions for user".to_string(),
+                                    command_error: None
+                                });
+                            }
+                        };
+                        if let Some(action_id) = action_id {
+                            match self.mongo.expire_action(guild_id, action_id).await {
+                                Ok(_) => {
+                                    return Ok(true);
+                                },
+                                Err(err) => {
+                                    error!("Failed to expire action. Failed with error: {}", err);
+                                    return Err(CommandError {
+                                        message: "Failed to expire action".to_string(),
+                                        command_error: None
+                                    });
+                                }
+                            }
+                        }
+                    }
                     error!("Failed to get member. Failed with error: {}", err);
                     return Err(CommandError {
                         message: "Failed to get member".to_string(),
@@ -45,7 +78,7 @@ impl Handler {
                         match self.mongo.get_actions_for_user(user_id, guild_id).await {
                             Ok(actions) => {
                                 for action in actions {
-                                    if action.action_type == ActionType::Mute {
+                                    if action.action_type == ActionType::Mute && action.active == true {
                                         match self.mongo.expire_action(guild_id, action.uuid.to_string().clone()).await {
                                             Ok(_) => return Ok(true),
                                             Err(err) => {

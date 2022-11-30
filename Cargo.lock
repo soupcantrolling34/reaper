@@ -502,24 +502,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "grim-reaper"
-version = "0.1.1"
-dependencies = [
- "mongodb",
- "redis",
- "regex",
- "serde",
- "serde_derive",
- "serde_json",
- "serenity",
- "strum",
- "strum_macros",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1099,6 +1081,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "reaper"
+version = "0.1.1"
+dependencies = [
+ "mongodb",
+ "redis",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serenity",
+ "strum",
+ "strum_macros",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

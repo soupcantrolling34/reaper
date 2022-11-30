@@ -14,6 +14,9 @@ pub async fn send_message(ctx: &Context, cmd: &ApplicationCommandInteraction, co
                 message
                     .content(content)
                     .ephemeral(is_ephermal)
+                    .allowed_mentions(|allowed_mentions| {
+                        allowed_mentions.empty_parse()
+                    })
             })
     }).await {
         Ok(_) => Ok(()),
