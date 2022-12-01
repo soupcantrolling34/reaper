@@ -1,5 +1,6 @@
 use std::{collections::HashMap, borrow::Borrow, fmt::Display, hash::Hash};
 use mongodb::bson::Bson;
+use serde::{Deserializer, Deserialize as SerdeDeserialize};
 use serde_derive::{Serialize, Deserialize};
 use strum_macros::{EnumIter};
 
@@ -205,14 +206,26 @@ impl From<LoggingConfig> for mongodb::bson::Document {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ModerationConfig {
     pub mute_role: i64,
+    #[serde(deserialize_with = "deserialize_strike_escalations")]
     pub strike_escalations: HashMap<u64, StrikeEscalation>,
     pub blacklisted_words: Vec<String>,
     pub blacklisted_regex: Vec<String>,
     pub default_strike_duration: String,
+}
+
+fn deserialize_strike_escalations<'de, D>(deserializer: D) -> Result<HashMap<u64, StrikeEscalation>, D::Error>
+    where D: Deserializer<'de>
+{
+    let mut map: HashMap::<u64, StrikeEscalation> = HashMap::new();
+    let mut incoming_map: HashMap::<String, StrikeEscalation> = HashMap::deserialize(deserializer)?;
+    for (key, value) in incoming_map.drain() {
+        map.insert(key.parse::<u64>().unwrap(), value);
+    }
+    Ok(map)
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -311,7 +324,7 @@ impl PartialEq for ActionType {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct StrikeEscalation {
     pub action: ActionType,
