@@ -137,7 +137,7 @@ impl Handler {
             },
             _ => {}
         }
-        message_content.push_str(&format!("\n**UUID:** {}", action.uuid.to_string()));
+        message_content.push_str(&format!("\nUUID: `{}`", action.uuid.to_string()));
 
         if let Some(logging_config) = guild.config.logging {
             match ChannelId(logging_config.logging_channel as u64).send_message(&ctx.http, |message| {
