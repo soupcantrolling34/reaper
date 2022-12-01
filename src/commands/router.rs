@@ -2,7 +2,7 @@ use serenity::{prelude::Context, model::{prelude::{interaction::Interaction, Mem
 use tracing::error;
 use crate::{Handler, commands, commands::{structs::CommandError, utils::messages::send_message}, mongo::structs::{Permissions, Action, ActionType}};
 
-use super::{utils::guild::guild_id_to_guild};
+use super::{utils::{guild::guild_id_to_guild}};
 
 impl Handler {
     pub async fn on_command(&self, ctx: Context, interaction: Interaction) {
@@ -34,7 +34,7 @@ impl Handler {
                         error!("An error was provided: {}", command_error);
                         message_content.push_str(&format!("\nError: {}", command_error));
                     }
-                    if let Err(err) = send_message(&ctx, &command, message_content, Some(true)).await {
+                    if let Err(err) = send_message(&ctx, &command, message_content).await {
                         error!("Failed to send message to user notifying of an error. Failed with error: {}", err);
                     }
                 }

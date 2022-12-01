@@ -19,6 +19,6 @@ pub async fn guild_id_to_guild(ctx: &Context, guild_id: i64) -> Result<PartialGu
 
 impl Handler {
     pub async fn missing_permissions(&self, ctx: &Context, cmd: &ApplicationCommandInteraction, permission: Permissions) -> Result<(), CommandError> {
-        return send_message(&ctx, &cmd, format!("You are missing the `{}` permission to run this!", permission.to_string()), Some(true)).await
+        return send_message(&ctx, &cmd, format!("You are missing the `{}` permission to run this!", permission.to_string())).await
     }
 }

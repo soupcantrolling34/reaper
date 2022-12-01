@@ -2,22 +2,30 @@ use serenity::{prelude::Context, model::prelude::interaction::{application_comma
 
 use crate::commands::structs::CommandError;
 
-pub async fn send_message(ctx: &Context, cmd: &ApplicationCommandInteraction, content: String, ephermal: Option<bool>) -> Result<(), CommandError> {
-    let mut is_ephermal = false;
-    if let Some(ephermal) = ephermal {
-        is_ephermal = ephermal;
-    }
-    match cmd.create_interaction_response(&ctx.http, |response| {
+pub async fn defer(ctx: &Context, interaction: &ApplicationCommandInteraction, ephemeral: bool) -> Result<(), CommandError> {
+    match interaction.create_interaction_response(ctx.http.clone(), |response| {
         response
-            .kind(InteractionResponseType::ChannelMessageWithSource)
+            .kind(InteractionResponseType::DeferredChannelMessageWithSource)
             .interaction_response_data(|message| {
                 message
-                    .content(content)
-                    .ephemeral(is_ephermal)
+                    .ephemeral(ephemeral)
                     .allowed_mentions(|allowed_mentions| {
                         allowed_mentions.empty_parse()
                     })
             })
+    }).await {
+        Ok(_) => Ok(()),
+        Err(err) => Err(CommandError {
+            message: "Failed to defer command".to_string(),
+            command_error: Some(err)
+        })
+    }
+}
+
+pub async fn send_message(ctx: &Context, cmd: &ApplicationCommandInteraction, content: String) -> Result<(), CommandError> {
+    match cmd.edit_original_interaction_response(&ctx.http, |response| {
+        response
+            .content(content)
     }).await {
         Ok(_) => Ok(()),
         Err(err) => {

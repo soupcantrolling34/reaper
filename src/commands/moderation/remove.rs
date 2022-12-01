@@ -1,9 +1,12 @@
 use serenity::{builder::CreateApplicationCommand, prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType, ChannelId}};
 use tracing::error;
 
-use crate::{Handler, commands::{structs::CommandError, utils::messages::send_message}, mongo::structs::Permissions};
+use crate::{Handler, commands::{structs::CommandError, utils::messages::{send_message, defer}}, mongo::structs::Permissions};
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     match handler.has_permission(&ctx, &cmd.member.as_ref().unwrap(), Permissions::ModerationRemove).await {
         Ok(has_permission) => {
             if !has_permission {
@@ -42,7 +45,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     }
                 }
             }
-            return send_message(&ctx, &cmd, format!("Action with UUID `{}` successfully removed!", uuid), None).await;
+            return send_message(&ctx, &cmd, format!("Action with UUID `{}` successfully removed!", uuid)).await;
         },
         Err(err) => {
             error!("Failed to remove action. Failed with error: {}", err);

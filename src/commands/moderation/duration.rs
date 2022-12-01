@@ -1,9 +1,12 @@
 use serenity::{builder::CreateApplicationCommand, prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType, ChannelId}};
 use tracing::error;
 
-use crate::{Handler, commands::{structs::CommandError, utils::{duration::Duration, messages::send_message}}, mongo::structs::Permissions};
+use crate::{Handler, commands::{structs::CommandError, utils::{duration::Duration, messages::{send_message, defer}}}, mongo::structs::Permissions};
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, true).await {
+        return Err(err)
+    }
     match handler.has_permission(&ctx, &cmd.member.as_ref().unwrap(), Permissions::ModerationDuration).await {
         Ok(has_permission) => {
             if !has_permission {
@@ -41,7 +44,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     Some(action.uuid.to_string())
                 }
                 else {
-                    return send_message(&ctx, &cmd, "Since you have no recent actions, you will need to specify a UUID".to_string(), Some(true)).await;
+                    return send_message(&ctx, &cmd, "Since you have no recent actions, you will need to specify a UUID".to_string()).await;
                 }
             },
             Err(err) => {
@@ -77,10 +80,10 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                         }
                     }
                 }
-                return send_message(&ctx, &cmd, format!("Updated action with UUID `{}` to have a duration of <t:{}:F>", action.uuid, action.expiry.unwrap()), Some(true)).await;
+                return send_message(&ctx, &cmd, format!("Updated action with UUID `{}` to have a duration of <t:{}:F>", action.uuid, action.expiry.unwrap())).await;
             }
             else {
-                return send_message(&ctx, &cmd, "The action with this ID does not exist".to_string(), Some(true)).await;
+                return send_message(&ctx, &cmd, "The action with this ID does not exist".to_string()).await;
             }
         },
         Err(err) => {

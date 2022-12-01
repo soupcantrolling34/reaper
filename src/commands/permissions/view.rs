@@ -4,9 +4,12 @@ use serde_json::Value;
 use serenity::{prelude::Context, model::{prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType, RoleId, UserId, Member}, permissions}};
 use tracing::{warn, error, info};
 
-use crate::{Handler, commands::{structs::CommandError, utils::{messages::send_message, guild::guild_id_to_guild}}, mongo::structs::Permissions};
+use crate::{Handler, commands::{structs::CommandError, utils::{messages::{send_message, defer}, guild::guild_id_to_guild}}, mongo::structs::Permissions};
 
 pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     let mut user_id: Option<i64> = None;
 
     match cmd.data.options[0].options[0].kind {
@@ -34,7 +37,7 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
     };
 
     if user_id.unwrap() == guild.owner_id.0 as i64 {
-        return send_message(&ctx, &cmd, format!("<@{}> is the server owner, so has all permissions", cmd.user.id.0), None).await;
+        return send_message(&ctx, &cmd, format!("<@{}> is the server owner, so has all permissions", cmd.user.id.0)).await;
     }
 
     let mut member: Option<Member> = ctx.cache.member(cmd.guild_id.unwrap(), UserId{0: user_id.unwrap() as u64});
@@ -43,7 +46,7 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
             Ok(mbr) => {
                 if let Some(permission) = mbr.permissions {
                     if permission.contains(permissions::Permissions::ADMINISTRATOR) {
-                        return send_message(&ctx, &cmd, format!("<@{}> is a server administrator, so has all permissions", cmd.user.id.0), None).await;
+                        return send_message(&ctx, &cmd, format!("<@{}> is a server administrator, so has all permissions", cmd.user.id.0)).await;
                     }
                 }
                 member = Some(mbr);
@@ -145,10 +148,13 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
         }
     }
 
-    send_message(&ctx, &cmd, message_content, None).await
+    send_message(&ctx, &cmd, message_content).await
 }
 
 pub async fn role_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     let mut role_id: Option<i64> = None;
 
     match cmd.data.options[0].options[0].options[0].kind {
@@ -181,7 +187,7 @@ pub async fn role_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
                     message_content.push_str(&format!("`{}`\n", permission.to_string()));
                 }
             }
-            send_message(&ctx, &cmd, message_content, None).await
+            send_message(&ctx, &cmd, message_content).await
         },
         Err(err) => {
             error!("Failed to get role from database. Failed with error: {}", err);

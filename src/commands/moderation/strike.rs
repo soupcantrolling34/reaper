@@ -2,7 +2,7 @@ use serde_json::Value;
 use serenity::{prelude::Context, builder::CreateApplicationCommand, model::prelude::{command::CommandOptionType, interaction::application_command::ApplicationCommandInteraction, UserId}};
 use tracing::{error, warn};
 
-use crate::{Handler, commands::{utils::{duration::Duration, messages::send_message}, structs::CommandError}, mongo::structs::{Action, ActionType, Permissions}};
+use crate::{Handler, commands::{utils::{duration::Duration, messages::{send_message, defer}}, structs::CommandError}, mongo::structs::{Action, ActionType, Permissions}};
 
 impl Handler {
     pub async fn strike(&self, ctx: &Context, guild_id: i64, user_id: i64, reason: String, moderator_id: Option<i64>, duration: Option<Duration>) -> Result<Action, CommandError> {
@@ -109,6 +109,9 @@ impl Handler {
 }
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     match handler.has_permission(&ctx, &cmd.member.as_ref().unwrap(), Permissions::ModerationStrike).await {
         Ok(has_permission) => {
             if !has_permission {
@@ -135,7 +138,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     Ok(id) => {
                         if id == cmd.user.id.0 as i64 {
                             warn!("User {} in guild {} tried to strike themselves", cmd.user.id.0, cmd.guild_id.unwrap().0);
-                            return send_message(&ctx, &cmd, "You cannot strike yourself".to_string(), Some(true)).await;
+                            return send_message(&ctx, &cmd, "You cannot strike yourself".to_string()).await;
                         }
                         user_id = Some(id)
                     },
@@ -212,7 +215,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
             if !messaged_user {
                 message_content.push_str(&format!("\n*<@{}> could not be notified*", user.as_ref().unwrap().id.0));
             }
-            send_message(&ctx, &cmd, message_content, None).await
+            send_message(&ctx, &cmd, message_content).await
         },
         Err(err) => {
             error!("Failed to strike user. Failed with error: {}", err);

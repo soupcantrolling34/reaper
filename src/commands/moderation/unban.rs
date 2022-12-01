@@ -2,7 +2,7 @@ use serde_json::Value;
 use serenity::{builder::CreateApplicationCommand, prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType, ChannelId}};
 use tracing::{error, warn};
 
-use crate::{Handler, commands::{structs::CommandError, utils::messages::send_message}, mongo::structs::{Permissions, ActionType}};
+use crate::{Handler, commands::{structs::CommandError, utils::messages::{send_message, defer}}, mongo::structs::{Permissions, ActionType}};
 
 impl Handler {
     pub async fn unban(&self, ctx: &Context, guild_id: i64, user_id: i64, moderator_id: Option<i64>) -> Result<bool, CommandError> {
@@ -52,6 +52,9 @@ impl Handler {
 }
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     match handler.has_permission(&ctx, &cmd.member.as_ref().unwrap(), Permissions::ModerationUnban).await {
         Ok(has_permission) => {
             if !has_permission {
@@ -71,7 +74,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
         Ok(id) => {
             if id == cmd.user.id.0 as i64 {
                 warn!("User {} in guild {} tried to unban themselves", cmd.user.id.0, cmd.guild_id.unwrap().0);
-                return send_message(&ctx, &cmd, "You cannot unban yourself".to_string(), Some(true)).await;
+                return send_message(&ctx, &cmd, "You cannot unban yourself".to_string()).await;
             }
             id as u64
         },
@@ -112,9 +115,9 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                         }
                     }
                 }
-                send_message(&ctx, &cmd, format!("Unbanned <@{}>", user_id), Some(true)).await
+                send_message(&ctx, &cmd, format!("Unbanned <@{}>", user_id)).await
             } else {
-                send_message(&ctx, &cmd, format!("Failed to unban <@{}>", user_id), Some(true)).await
+                send_message(&ctx, &cmd, format!("Failed to unban <@{}>", user_id)).await
             }
         },
         Err(err) => {

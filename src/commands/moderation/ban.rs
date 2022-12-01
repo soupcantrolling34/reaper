@@ -2,7 +2,7 @@ use serde_json::Value;
 use serenity::{builder::CreateApplicationCommand, prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType, UserId}};
 use tracing::{error, warn};
 
-use crate::{Handler, commands::{structs::CommandError, utils::{duration::Duration, messages::send_message}}, mongo::structs::{Action, ActionType, Permissions}};
+use crate::{Handler, commands::{structs::CommandError, utils::{duration::Duration, messages::{send_message, defer}}}, mongo::structs::{Action, ActionType, Permissions}};
 
 impl Handler {
     pub async fn ban(&self, ctx: &Context, guild_id: i64, user_id: i64, reason: String, moderator_id: Option<i64>, duration: Option<Duration>) -> Result<Option<Action>, CommandError> {
@@ -39,6 +39,10 @@ impl Handler {
 }
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
+
     match handler.has_permission(&ctx, &cmd.member.as_ref().unwrap(), Permissions::ModerationBan).await {
         Ok(has_permission) => {
             if !has_permission {
@@ -65,7 +69,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     Ok(id) => {
                         if id == cmd.user.id.0 as i64 {
                             warn!("User {} in guild {} tried to ban themselves", cmd.user.id.0, cmd.guild_id.unwrap().0);
-                            return send_message(&ctx, &cmd, "You cannot ban yourself".to_string(), Some(true)).await;
+                            return send_message(&ctx, &cmd, "You cannot ban yourself".to_string()).await;
                         }
                         user_id = Some(id)
                     },
@@ -143,10 +147,10 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                 if !messaged_user {
                     message_content.push_str(&format!("\n*<@{}> could not be notified*", user.as_ref().unwrap().id.0));
                 }
-                return send_message(&ctx, &cmd, message_content, None).await;
+                return send_message(&ctx, &cmd, message_content).await;
             }
             else {
-                return send_message(&ctx, &cmd, format!("Failed to ban <@{}>", user.as_ref().unwrap().id.0), Some(true)).await;
+                return send_message(&ctx, &cmd, format!("Failed to ban <@{}>", user.as_ref().unwrap().id.0)).await;
             }
             
         },

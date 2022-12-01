@@ -2,7 +2,7 @@ use serde_json::Value;
 use serenity::{builder::CreateApplicationCommand, prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, RoleId, command::CommandOptionType, ChannelId}};
 use tracing::{error, warn};
 
-use crate::{Handler, commands::{structs::CommandError, utils::messages::send_message}, mongo::structs::{ActionType, Permissions}};
+use crate::{Handler, commands::{structs::CommandError, utils::messages::{send_message, defer}}, mongo::structs::{ActionType, Permissions}};
 
 impl Handler {
     pub async fn unmute(&self, ctx: &Context, guild_id: i64, user_id: i64, moderator_id: Option<i64>) -> Result<bool, CommandError> {
@@ -121,6 +121,9 @@ impl Handler {
 }
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     match handler.has_permission(&ctx, &cmd.member.as_ref().unwrap(), Permissions::ModerationUnmute).await {
         Ok(has_permission) => {
             if !has_permission {
@@ -140,7 +143,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
         Ok(id) => {
             if id == cmd.user.id.0 as i64 {
                 warn!("User {} in guild {} tried to unmute themselves", cmd.user.id.0, cmd.guild_id.unwrap().0);
-                return send_message(&ctx, &cmd, "You cannot unmute yourself".to_string(), Some(true)).await;
+                return send_message(&ctx, &cmd, "You cannot unmute yourself".to_string()).await;
             }
             id as u64
         },
@@ -180,7 +183,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     }
                 }
             }
-            return send_message(&ctx, &cmd, format!("Unmuted <@{}>", user_id), None).await;
+            return send_message(&ctx, &cmd, format!("Unmuted <@{}>", user_id)).await;
         },
         Err(err) => {
             error!("Failed to unmute user. Failed with error: {}", err);

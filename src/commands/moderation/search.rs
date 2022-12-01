@@ -2,7 +2,7 @@ use serde_json::Value;
 use serenity::{builder::CreateApplicationCommand, prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType}};
 use tracing::{error, warn};
 
-use crate::{Handler, commands::{structs::CommandError, utils::messages::send_message}, mongo::structs::{Permissions, ActionType}};
+use crate::{Handler, commands::{structs::CommandError, utils::messages::{send_message, defer}}, mongo::structs::{Permissions, ActionType}};
 
 pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
     match cmd.data.options[0].name.as_str() {
@@ -31,6 +31,10 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     },
                     _ => warn!("Option type {:?} not handled", option.kind)
                 }
+            }
+
+            if let Err(err) = defer(&ctx, &cmd, user_id == cmd.user.id.0 as i64).await {
+                return Err(err)
             }
 
             let permission;
@@ -98,7 +102,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                             message_content.push_str("No active history");
                         }
                     }
-                    return send_message(&ctx, &cmd, message_content, Some(user_id == cmd.user.id.0 as i64)).await;
+                    return send_message(&ctx, &cmd, message_content).await;
                 },
                 Err(err) => {
                     error!("Failed to get actions for user. Failed with error: {}", err);
@@ -150,10 +154,10 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                                 message_content.push_str(&format!("\n\t*Expires:* <t:{}:F>", expiry));
                             }
 
-                            return send_message(&ctx, &cmd, message_content, None).await;
+                            return send_message(&ctx, &cmd, message_content).await;
                         },
                         None => {
-                            return send_message(&ctx, &cmd, format!("No action found with UUID `{}`", uuid), None).await;
+                            return send_message(&ctx, &cmd, format!("No action found with UUID `{}`", uuid)).await;
                         }
                     }
                 },

@@ -2,9 +2,12 @@ use serde_json::Value;
 use serenity::{prelude::Context, model::prelude::{interaction::application_command::ApplicationCommandInteraction, command::CommandOptionType}};
 use tracing::{error, warn};
 
-use crate::{Handler, commands::{structs::CommandError, utils::messages::send_message}, mongo::structs::Permissions};
+use crate::{Handler, commands::{structs::CommandError, utils::messages::{send_message, defer}}, mongo::structs::Permissions};
 
 pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     let mut user_id: Option<i64> = None;
     let mut permission: Option<Permissions> = None;
 
@@ -28,7 +31,7 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
                         match Permissions::from(perm.to_string()) {
                             Permissions::Unknown => {
                                 warn!("Permission {} is not a valid permission and could not be applied", perm);
-                                return send_message(&ctx, &cmd, format!("`{}` is not a valid permission and could not be applied", perm), Some(true)).await;
+                                return send_message(&ctx, &cmd, format!("`{}` is not a valid permission and could not be applied", perm)).await;
                             }
                             _ => permission = Some(Permissions::from(perm.to_string())),
                         }
@@ -53,7 +56,7 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
         Ok(user) => {
             if user.permissions.contains(&permission.unwrap()) {
                 warn!("User {} already has permission {}", user_id.unwrap(), permission.unwrap().to_string());
-                return send_message(&ctx, &cmd, format!("<@{}> already has `{}`", user_id.unwrap(), permission.unwrap().to_string()), Some(true)).await;
+                return send_message(&ctx, &cmd, format!("<@{}> already has `{}`", user_id.unwrap(), permission.unwrap().to_string())).await;
             }
         },
         Err(err) => {
@@ -71,7 +74,7 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
         permission.unwrap()
     ).await {
         Ok(_) => {
-            send_message(&ctx, &cmd, format!("Successfully added `{}` to <@{}>", permission.unwrap().to_string(), user_id.unwrap()), None).await
+            send_message(&ctx, &cmd, format!("Successfully added `{}` to <@{}>", permission.unwrap().to_string(), user_id.unwrap())).await
         },
         Err(err) => {
             error!("Failed to add permission to user: {}", err);
@@ -84,6 +87,9 @@ pub async fn user_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
 }
 
 pub async fn role_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInteraction) -> Result<(), CommandError> {
+    if let Err(err) = defer(&ctx, &cmd, false).await {
+        return Err(err)
+    }
     let mut role_id: Option<i64> = None;
     let mut permission: Option<Permissions> = None;
 
@@ -107,7 +113,7 @@ pub async fn role_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
                         match Permissions::from(perm.to_string()) {
                             Permissions::Unknown => {
                                 warn!("Permission {} is not a valid permission and could not be applied", perm);
-                                return send_message(&ctx, &cmd, format!("`{}` is not a valid permission and could not be applied", perm), Some(true)).await;
+                                return send_message(&ctx, &cmd, format!("`{}` is not a valid permission and could not be applied", perm)).await;
                             }
                             _ => permission = Some(Permissions::from(perm.to_string())),
                         }
@@ -132,7 +138,7 @@ pub async fn role_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
         Ok(role) => {
             if role.permissions.contains(&permission.unwrap()) {
                 warn!("Role {} already has permission {}", role_id.unwrap(), permission.unwrap().to_string());
-                return send_message(&ctx, &cmd, format!("<@&{}> already has `{}`", role_id.unwrap(), permission.unwrap().to_string()), Some(true)).await;
+                return send_message(&ctx, &cmd, format!("<@&{}> already has `{}`", role_id.unwrap(), permission.unwrap().to_string())).await;
             }
         },
         Err(err) => {
@@ -150,7 +156,7 @@ pub async fn role_run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommand
         permission.unwrap()
     ).await {
         Ok(_) => {
-            send_message(&ctx, &cmd, format!("Successfully added `{}` to <@&{}>", permission.unwrap().to_string(), role_id.unwrap()), None).await
+            send_message(&ctx, &cmd, format!("Successfully added `{}` to <@&{}>", permission.unwrap().to_string(), role_id.unwrap())).await
         },
         Err(err) => {
             error!("Failed to add permission to role: {}", err);
