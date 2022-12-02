@@ -40,7 +40,7 @@ impl Handler {
 
             for word in moderation_config.blacklisted_words {
                 if new_message.content.to_lowercase().contains(&word) {
-                    strike_reason = Some(format!("Blacklisted word: `{}`", word));
+                    strike_reason = Some(format!("Blacklisted word: \"{}\"", word));
                     break;
                 }
                 
@@ -55,7 +55,7 @@ impl Handler {
                     }
                 };
                 if regex.is_match(&new_message.content) {
-                    strike_reason = Some(format!("Blacklisted regex: `{}`", regex));
+                    strike_reason = Some(format!("Blacklisted regex: \"{}\"", regex));
                     break;
                 }
             }

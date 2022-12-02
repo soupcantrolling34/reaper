@@ -57,7 +57,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
         }
     }
 
-    match handler.mongo.update_action_reason(cmd.guild_id.unwrap().0 as i64, uuid.unwrap(), reason.unwrap()).await {
+    match handler.mongo.update_action_reason(cmd.guild_id.unwrap().0 as i64, uuid.unwrap(), reason.clone().unwrap()).await {
         Ok(action) => {
             if let Some(action) = action {
                 let guild = match handler.mongo.get_guild(action.guild_id).await {
@@ -71,7 +71,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                     if let Some(logging_config) = guild.config.logging {
                         if let Err(err) = ChannelId(logging_config.logging_channel as u64).send_message(&ctx.http, |message| {
                             message
-                                .content(format!("UUID `{}` reason (for <@{}>) has been updated to `{}` by <@{}>", action.uuid, action.user_id, action.reason, cmd.user.id.0))
+                                .content(format!("UUID `{}` reason (for <@{}>) has been updated to `{}` by <@{}>", action.uuid, action.user_id, reason.as_ref().unwrap(), cmd.user.id.0))
                                 .allowed_mentions(|allowed_mentions| {
                                     allowed_mentions.empty_parse()
                                 })
@@ -80,7 +80,7 @@ pub async fn run(handler: &Handler, ctx: &Context, cmd: &ApplicationCommandInter
                         }
                     }
                 }
-                return send_message(&ctx, &cmd, format!("Updated action with UUID `{}` to have a reason to `{}`", action.uuid, action.reason)).await;
+                return send_message(&ctx, &cmd, format!("Updated action with UUID `{}` to have a reason to `{}`", action.uuid, reason.unwrap())).await;
             }
             else {
                 return send_message(&ctx, &cmd, "The action with this ID does not exist".to_string()).await;
